@@ -1,0 +1,1 @@
+cmd_/home/kanghong.chen/workspace/systemTest/PerfEvents_Test/ctest_signal_ignore.mod := printf '%s\n'   ctest_signal_ignore.o | awk '!x[$$0]++ { print("/home/kanghong.chen/workspace/systemTest/PerfEvents_Test/"$$0) }' > /home/kanghong.chen/workspace/systemTest/PerfEvents_Test/ctest_signal_ignore.mod

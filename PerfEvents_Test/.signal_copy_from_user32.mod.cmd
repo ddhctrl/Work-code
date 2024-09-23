@@ -1,0 +1,1 @@
+cmd_/home/kanghong.chen/workspace/systemTest/PerfEvents_Test/signal_copy_from_user32.mod := printf '%s\n'   signal_copy_from_user32.o | awk '!x[$$0]++ { print("/home/kanghong.chen/workspace/systemTest/PerfEvents_Test/"$$0) }' > /home/kanghong.chen/workspace/systemTest/PerfEvents_Test/signal_copy_from_user32.mod

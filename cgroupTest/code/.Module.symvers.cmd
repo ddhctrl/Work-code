@@ -1,0 +1,1 @@
+cmd_/home/kanghong.chen/workspace/systemTest/cgroupTest/code/Module.symvers :=  sed 's/ko$$/o/'  /home/kanghong.chen/workspace/systemTest/cgroupTest/code/modules.order | scripts/mod/modpost       -o /home/kanghong.chen/workspace/systemTest/cgroupTest/code/Module.symvers -e -i Module.symvers -T - 

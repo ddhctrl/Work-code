@@ -1,0 +1,1 @@
+cmd_/home/kanghong.chen/workspace/systemTest/PerfEvents_Test/ko_rb_free_aux.mod := printf '%s\n'   ko_rb_free_aux.o | awk '!x[$$0]++ { print("/home/kanghong.chen/workspace/systemTest/PerfEvents_Test/"$$0) }' > /home/kanghong.chen/workspace/systemTest/PerfEvents_Test/ko_rb_free_aux.mod

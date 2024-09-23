@@ -1,0 +1,43 @@
+#!/bin/bash
+log_info() {
+    echo -e "$(date +'%Y-%m-%d %H:%M:%S') \033[1;32m[INFO]\033[0m $1"
+}
+log_warn() {
+    echo -e "$(date +'%Y-%m-%d %H:%M:%S') \033[1;33m[WARNING]\033[0m $1"
+}
+log_error() {
+    echo -e "$(date +'%Y-%m-%d %H:%M:%S') \033[1;31m[ERROR]\033[0m $1"
+}
+
+# 获取 notify_die 函数的地址
+func_address=$(cat /proc/kallsyms | grep " perf_output_skip$" | awk '{print $1}')
+test_ko=ko_perf_output_skip.ko
+
+# 检查地址是否非零
+chech_addr() {
+    if [ "$func_address" != "0000000000000000" ] && [ -n "$func_address" ]; then
+        log_info "perf_output_skip address: $func_address"
+    else
+        log_error "perf_output_skip address not found or is zero"
+        exit 1
+    fi
+}
+
+test_mod() {
+    insmod $test_ko addr2=0x$func_address
+    log_info "$test_ko 模块加载成功"
+    lsmod
+    log_info "$test_ko 卸载模块"
+    rmmod $test_ko
+}
+
+main() {
+    log_info "Start tests..."
+
+    chech_addr
+    test_mod
+
+    log_info "All tests completed."
+}
+
+main

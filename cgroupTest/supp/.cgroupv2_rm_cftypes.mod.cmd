@@ -1,0 +1,1 @@
+cmd_/home/kanghong.chen/workspace/systemTest/cgroupTest/supp/cgroupv2_rm_cftypes.mod := printf '%s\n'   cgroupv2_rm_cftypes.o | awk '!x[$$0]++ { print("/home/kanghong.chen/workspace/systemTest/cgroupTest/supp/"$$0) }' > /home/kanghong.chen/workspace/systemTest/cgroupTest/supp/cgroupv2_rm_cftypes.mod

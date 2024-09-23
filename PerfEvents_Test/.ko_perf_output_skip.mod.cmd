@@ -1,0 +1,1 @@
+cmd_/home/kanghong.chen/workspace/systemTest/PerfEvents_Test/ko_perf_output_skip.mod := printf '%s\n'   ko_perf_output_skip.o | awk '!x[$$0]++ { print("/home/kanghong.chen/workspace/systemTest/PerfEvents_Test/"$$0) }' > /home/kanghong.chen/workspace/systemTest/PerfEvents_Test/ko_perf_output_skip.mod

@@ -1,0 +1,107 @@
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <linux/perf_event.h>
+#include <sys/ioctl.h>
+#include <sys/syscall.h>
+#include <signal.h>
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+
+static long
+perf_event_open(struct perf_event_attr *hw_event, pid_t pid,
+                int cpu, int group_fd, unsigned long flags)
+{
+    return syscall(__NR_perf_event_open, hw_event, pid, cpu, group_fd, flags);
+}
+
+static void signal_handler(int signum, siginfo_t *info, void *ucontext)
+{
+    printf("Signal received: %d\n", signum);
+}
+
+void check_and_send_signal(int fd)
+{
+    struct perf_event_mmap_page *header;
+    header = mmap(NULL, sysconf(_SC_PAGESIZE), PROT_READ, MAP_SHARED, fd, 0);
+    if (header == MAP_FAILED) {
+        perror("mmap");
+        return;
+    }
+
+    // Simulate a condition to send a signal
+    if (header->data_head != header->data_tail) {
+        kill(getpid(), SIGIO);
+    }
+
+    munmap(header, sysconf(_SC_PAGESIZE));
+}
+
+int main(int argc, char **argv)
+{
+    struct perf_event_attr pe;
+    memset(&pe, 0, sizeof(struct perf_event_attr));
+    pe.type = PERF_TYPE_SOFTWARE;
+    pe.size = sizeof(struct perf_event_attr);
+    pe.config = PERF_COUNT_SW_TASK_CLOCK;
+    pe.disabled = 1;
+    pe.exclude_kernel = 1;
+    pe.exclude_hv = 1;
+    pe.sample_type = PERF_SAMPLE_IP;
+    pe.wakeup_events = 1;
+
+    int fd = perf_event_open(&pe, 0, -1, -1, 0);
+    if (fd == -1) {
+        fprintf(stderr, "Error opening leader %llx\n", pe.config);
+        exit(EXIT_FAILURE);
+    }
+
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(struct sigaction));
+    sa.sa_sigaction = signal_handler;
+    sa.sa_flags = SA_SIGINFO;
+
+    if (sigaction(SIGIO, &sa, NULL) == -1) {
+        fprintf(stderr, "Error setting up signal handler: %s\n", strerror(errno));
+        close(fd);
+        exit(EXIT_FAILURE);
+    }
+
+    if (fcntl(fd, F_SETFL, O_RDWR | O_NONBLOCK | O_ASYNC) == -1) {
+        fprintf(stderr, "Error setting fd flags: %s\n", strerror(errno));
+        close(fd);
+        exit(EXIT_FAILURE);
+    }
+
+    if (fcntl(fd, F_SETSIG, SIGIO) == -1) {
+        fprintf(stderr, "Error setting fd signal: %s\n", strerror(errno));
+        close(fd);
+        exit(EXIT_FAILURE);
+    }
+
+    if (fcntl(fd, F_SETOWN, getpid()) == -1) {
+        fprintf(stderr, "Error setting fd owner: %s\n", strerror(errno));
+        close(fd);
+        exit(EXIT_FAILURE);
+    }
+
+    ioctl(fd, PERF_EVENT_IOC_RESET, 0);
+    ioctl(fd, PERF_EVENT_IOC_ENABLE, 0);
+
+    // Simulate workload
+    for (int i = 0; i < 1000000; i++) {
+        asm volatile("" : : : "memory");
+    }
+
+    check_and_send_signal(fd);
+
+    ioctl(fd, PERF_EVENT_IOC_DISABLE, 0);
+
+    close(fd);
+
+    return 0;
+}
+

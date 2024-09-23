@@ -1,0 +1,1 @@
+cmd_/home/kanghong.chen/workspace/systemTest/PerfEvents_Test/rb_alloc_aux.mod := printf '%s\n'   rb_alloc_aux.o | awk '!x[$$0]++ { print("/home/kanghong.chen/workspace/systemTest/PerfEvents_Test/"$$0) }' > /home/kanghong.chen/workspace/systemTest/PerfEvents_Test/rb_alloc_aux.mod

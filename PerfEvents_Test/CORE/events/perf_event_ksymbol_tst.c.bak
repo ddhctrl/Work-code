@@ -1,0 +1,58 @@
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/perf_event.h>
+#include <linux/bug.h>
+#include <linux/string.h>
+#include <linux/kallsyms.h>
+#include <linux/atomic.h>
+
+#define TEST_KSYM_TYPE PERF_RECORD_KSYMBOL_TYPE_OOL // 示例类型
+#define TEST_ADDR 0xffff80000827b8a8 // perf_event_ksymbol 的地址
+#define TEST_LEN 128 // 示例长度
+#define TEST_UNREGISTER false // 示例是否注销
+#define TEST_SYM "perf_event_ksymbol" // 示例符号名称
+
+typedef void (*perf_event_ksymbol_t)(u16 ksym_type, u64 addr, u32 len, bool unregister, const char *sym);
+
+static int __init test_module_init(void)
+{
+    perf_event_ksymbol_t perf_event_ksymbol = (perf_event_ksymbol_t)TEST_ADDR;
+    atomic_t *nr_ksymbol_events_ptr;
+
+    printk(KERN_INFO "Initializing test module\n");
+
+    // 通过 kallsyms_lookup_name 获取 nr_ksymbol_events 的地址
+    nr_ksymbol_events_ptr = (atomic_t *)0xffff800009617668;
+
+    if (!nr_ksymbol_events_ptr) {
+        printk(KERN_ERR "Failed to get address of nr_ksymbol_events\n");
+        return -EINVAL;
+    }
+
+    // 打印 nr_ksymbol_events 的地址
+    printk(KERN_INFO "Address of nr_ksymbol_events: %p\n", nr_ksymbol_events_ptr);
+
+    // 强制设置 nr_ksymbol_events 的值
+    atomic_set(nr_ksymbol_events_ptr, 1);
+
+    // 打印设置后的 nr_ksymbol_events 值
+    printk(KERN_INFO "nr_ksymbol_events set to: %d\n", atomic_read(nr_ksymbol_events_ptr));
+
+    // 调用函数指针
+    printk(KERN_INFO "Calling perf_event_ksymbol\n");
+    perf_event_ksymbol(TEST_KSYM_TYPE, TEST_ADDR, TEST_LEN, TEST_UNREGISTER, TEST_SYM);
+    printk(KERN_INFO "perf_event_ksymbol called\n");
+
+    return 0;
+}
+
+static void __exit test_module_exit(void)
+{
+    printk(KERN_INFO "Exiting test module\n");
+}
+
+module_init(test_module_init);
+module_exit(test_module_exit);
+
+MODULE_LICENSE("GPL");

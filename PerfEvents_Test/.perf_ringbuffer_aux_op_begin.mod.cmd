@@ -1,0 +1,1 @@
+cmd_/home/kanghong.chen/workspace/systemTest/PerfEvents_Test/perf_ringbuffer_aux_op_begin.mod := printf '%s\n'   perf_ringbuffer_aux_op_begin.o | awk '!x[$$0]++ { print("/home/kanghong.chen/workspace/systemTest/PerfEvents_Test/"$$0) }' > /home/kanghong.chen/workspace/systemTest/PerfEvents_Test/perf_ringbuffer_aux_op_begin.mod

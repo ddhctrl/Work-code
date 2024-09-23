@@ -1,0 +1,46 @@
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/kprobes.h>
+#include <linux/perf_event.h>
+#include <linux/ptrace.h>
+#include <linux/slab.h>
+
+// 定义 kprobe 结构
+static struct kprobe kp;
+
+// 预处理函数
+static int handler_pre(struct kprobe *p, struct pt_regs *regs)
+{
+    printk(KERN_INFO "kprobe: pre_handler: p->addr = %p\n", p->addr);
+    return 0;
+}
+
+static int __init kprobe_init(void)
+{
+    // 设置 kprobe
+    kp.symbol_name = "perf_prepare_sample";
+    kp.pre_handler = handler_pre;
+
+    int ret = register_kprobe(&kp);
+    if (ret < 0) {
+        printk(KERN_ERR "register_kprobe failed, returned %d\n", ret);
+        return -1;
+    }
+
+    printk(KERN_INFO "kprobe registered at %p\n", kp.addr);
+    return 0;
+}
+
+static void __exit kprobe_exit(void)
+{
+    unregister_kprobe(&kp);
+    printk(KERN_INFO "kprobe unregistered\n");
+}
+
+module_init(kprobe_init);
+module_exit(kprobe_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Your Name");
+MODULE_DESCRIPTION("Kprobe module for testing perf_prepare_sample function");
+

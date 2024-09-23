@@ -1,0 +1,1 @@
+cmd_/home/kanghong.chen/workspace/systemTest/cgroupTest/code/ctest_cgroupv1_stats_build.mod := printf '%s\n'   ctest_cgroupv1_stats_build.o | awk '!x[$$0]++ { print("/home/kanghong.chen/workspace/systemTest/cgroupTest/code/"$$0) }' > /home/kanghong.chen/workspace/systemTest/cgroupTest/code/ctest_cgroupv1_stats_build.mod

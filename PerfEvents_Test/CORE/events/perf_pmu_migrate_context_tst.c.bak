@@ -1,0 +1,87 @@
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/perf_event.h>
+#include <linux/smp.h>
+#include <linux/slab.h>
+
+// 声明外部函数
+extern void perf_pmu_migrate_context(struct pmu *pmu, int src_cpu, int dst_cpu);
+
+// 定义一个简单的 PMU
+static struct pmu test_pmu;
+
+static int __init test_perf_pmu_migrate_init(void)
+{
+    int src_cpu = 0;
+    int dst_cpu = 1;
+    struct perf_event_context *src_ctx;
+    struct perf_event_context *dst_ctx;
+
+    // 初始化PMU的CPU上下文
+    test_pmu.pmu_cpu_context = alloc_percpu(struct perf_cpu_context);
+    if (!test_pmu.pmu_cpu_context) {
+        printk(KERN_ERR "Failed to allocate pmu_cpu_context\n");
+        return -ENOMEM;
+    }
+
+    // 为每个CPU分配上下文并初始化列表
+    for_each_possible_cpu(src_cpu) {
+        struct perf_cpu_context *cpu_ctx = per_cpu_ptr(test_pmu.pmu_cpu_context, src_cpu);
+        if (!cpu_ctx) {
+            printk(KERN_ERR "Failed to allocate cpu_ctx for CPU %d\n", src_cpu);
+            free_percpu(test_pmu.pmu_cpu_context);
+            return -ENOMEM;
+        }
+        INIT_LIST_HEAD(&cpu_ctx->ctx.event_list);
+    }
+
+    src_ctx = &per_cpu_ptr(test_pmu.pmu_cpu_context, src_cpu)->ctx;
+    dst_ctx = &per_cpu_ptr(test_pmu.pmu_cpu_context, dst_cpu)->ctx;
+
+    // 检查 src_ctx 和 dst_ctx 是否为 NULL
+    if (!src_ctx || !dst_ctx) {
+        printk(KERN_ERR "Failed to get src_ctx or dst_ctx\n");
+        free_percpu(test_pmu.pmu_cpu_context);
+        return -ENOMEM;
+    }
+
+    // 添加一个虚拟事件到 src_ctx
+    struct perf_event *event = kzalloc(sizeof(struct perf_event), GFP_KERNEL);
+    if (!event) {
+        printk(KERN_ERR "Failed to allocate perf_event\n");
+        free_percpu(test_pmu.pmu_cpu_context);
+        return -ENOMEM;
+    }
+    event->ctx = src_ctx;
+    event->group_leader = event;
+    INIT_LIST_HEAD(&event->event_entry);
+    list_add(&event->event_entry, &src_ctx->event_list);
+
+    printk(KERN_INFO "Test PMU migrate context from CPU %d to CPU %d\n", src_cpu, dst_cpu);
+
+    // 调用迁移函数
+    perf_pmu_migrate_context(&test_pmu, src_cpu, dst_cpu);
+
+    // 检查事件是否已迁移到 dst_ctx
+    if (list_empty(&src_ctx->event_list) && !list_empty(&dst_ctx->event_list)) {
+        printk(KERN_INFO "PMU context migration successful.\n");
+    } else {
+        printk(KERN_ERR "PMU context migration failed.\n");
+    }
+
+    return 0;
+}
+
+static void __exit test_perf_pmu_migrate_exit(void)
+{
+    // 释放分配的资源
+    free_percpu(test_pmu.pmu_cpu_context);
+    printk(KERN_INFO "Test PMU migrate module exit.\n");
+}
+
+module_init(test_perf_pmu_migrate_init);
+module_exit(test_perf_pmu_migrate_exit);
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Your Name");
+MODULE_DESCRIPTION("Test module for perf_pmu_migrate_context");

@@ -1,0 +1,1 @@
+cmd_/home/kanghong.chen/workspace/systemTest/PerfEvents_Test/Module.symvers :=  sed 's/ko$$/o/'  /home/kanghong.chen/workspace/systemTest/PerfEvents_Test/modules.order | scripts/mod/modpost       -o /home/kanghong.chen/workspace/systemTest/PerfEvents_Test/Module.symvers -e -i Module.symvers -T - 

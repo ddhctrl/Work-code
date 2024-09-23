@@ -1,0 +1,1 @@
+cmd_/home/kanghong.chen/workspace/systemTest/cgroupTest/code/ctest_cpuset_mem_spread_node.mod := printf '%s\n'   ctest_cpuset_mem_spread_node.o | awk '!x[$$0]++ { print("/home/kanghong.chen/workspace/systemTest/cgroupTest/code/"$$0) }' > /home/kanghong.chen/workspace/systemTest/cgroupTest/code/ctest_cpuset_mem_spread_node.mod

@@ -1,0 +1,1 @@
+cmd_/home/kanghong.chen/workspace/systemTest/cgroupTest/supp/pids_cancel_attach.mod := printf '%s\n'   pids_cancel_attach.o | awk '!x[$$0]++ { print("/home/kanghong.chen/workspace/systemTest/cgroupTest/supp/"$$0) }' > /home/kanghong.chen/workspace/systemTest/cgroupTest/supp/pids_cancel_attach.mod

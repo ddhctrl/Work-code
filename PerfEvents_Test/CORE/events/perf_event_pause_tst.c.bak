@@ -1,0 +1,82 @@
+#include <linux/module.h>
+#include <linux/perf_event.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
+
+static void test_perf_event_pause_work(struct work_struct *work);
+static DECLARE_WORK(test_work, test_perf_event_pause_work);
+
+static void test_perf_event_pause_work(struct work_struct *work)
+{
+    struct perf_event *event;
+    struct perf_event_attr attr;
+    struct perf_event_context *ctx;
+    u64 count;
+
+    // 初始化 perf_event 结构
+    event = kzalloc(sizeof(*event), GFP_KERNEL);
+    if (!event)
+        return;
+
+    // 初始化 perf_event_attr 结构
+    memset(&attr, 0, sizeof(attr));
+    attr.type = PERF_TYPE_HARDWARE;
+    attr.config = PERF_COUNT_HW_CPU_CYCLES;
+    event->attr = attr;
+
+    // 初始化 perf_event_context 结构
+    ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
+    if (!ctx) {
+        kfree(event);
+        return;
+    }
+    event->ctx = ctx;
+
+    local64_set(&event->count, 100); // 设置 count 为一个已知的值
+
+    // 测试 reset 为 false 的情况
+    count = perf_event_pause(event, false);
+    printk(KERN_INFO "Test with reset=false: returned count=%llu, event.count=%lu\n", count, (unsigned long)local64_read(&event->count));
+
+    // 验证结果
+    if (count != 100 || local64_read(&event->count) != 100) {
+        printk(KERN_ERR "Test failed for reset=false\n");
+    } else {
+        printk(KERN_INFO "Test passed for reset=false\n");
+    }
+
+    // 设置新的计数值
+    local64_set(&event->count, 200);
+
+    // 测试 reset 为 true 的情况
+    count = perf_event_pause(event, true);
+    printk(KERN_INFO "Test with reset=true: returned count=%llu, event.count=%lu\n", count, (unsigned long)local64_read(&event->count));
+
+    // 验证结果
+    if (count != 200 || local64_read(&event->count) != 0) {
+        printk(KERN_ERR "Test failed for reset=true\n");
+    } else {
+        printk(KERN_INFO "Test passed for reset=true\n");
+    }
+
+    kfree(event->ctx);
+    kfree(event);
+}
+
+static int __init test_perf_event_pause_init(void)
+{
+    schedule_work(&test_work);
+    return 0;
+}
+
+static void __exit test_perf_event_pause_exit(void)
+{
+    flush_work(&test_work);
+    printk(KERN_INFO "Test module exited\n");
+}
+
+module_init(test_perf_event_pause_init);
+module_exit(test_perf_event_pause_exit);
+
+MODULE_LICENSE("GPL");
