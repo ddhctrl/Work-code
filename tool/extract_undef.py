@@ -4,7 +4,7 @@ import re
 def extract_undefined_refs(filename, output_filename):
     try:
         # 使用GBK编码打开文件
-        with open(filename, 'r', encoding='gbk') as f:
+        with open(filename, 'r', encoding='utf-8') as f:
             content = f.read()
             
         # 使用正则表达式匹配所有undefined reference后面的函数名
